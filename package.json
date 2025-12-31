@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "cmd /d /s /c \"\"C:\\Program Files\\nodejs\\node.exe\" server.js\""
+    "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
