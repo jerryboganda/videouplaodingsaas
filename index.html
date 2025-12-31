@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamVault</title>
+    <link rel="icon" href="/tailadmin/favicon.ico">
+    <link href="/tailadmin/style.css" rel="stylesheet">
+</head>
+<body x-data="{ page: 'app', loaded: false, darkMode: false, stickyMenu: false, sidebarToggle: false, scrollTop: false }" :class="{'dark bg-gray-900': darkMode === true}">
+    <div id="toastHost" class="fixed left-1/2 top-4 z-99999 w-full max-w-xl -translate-x-1/2 px-4"></div>
+
+    <div id="authShell" class="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
+        <div class="relative flex flex-col justify-center w-full min-h-screen dark:bg-gray-900 sm:p-0 lg:flex-row">
+            <div class="flex flex-col flex-1 w-full">
+                <div class="w-full max-w-md pt-10 mx-auto">
+                    <div class="inline-flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white font-semibold">SV</div>
+                        <div class="text-gray-800 dark:text-white/90 font-semibold">StreamVault</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+                    <div id="authZone">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Sign In</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Use your admin credentials to continue</p>
+                        </div>
+
+                        <form id="adminLoginForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="adminUsername">Username</label>
+                                <input id="adminUsername" type="text" autocomplete="username" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="adminPassword">Password</label>
+                                <input id="adminPassword" type="password" autocomplete="current-password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Continue</button>
+                        </form>
+
+                        <div class="mt-5">
+                            <button id="forgotPasswordBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Forgot password</button>
+                        </div>
+                    </div>
+
+                    <div id="otpZone" class="hidden">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Verification</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter the code sent to your email</p>
+                        </div>
+
+                        <form id="otpForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="otpCode">Verification code</label>
+                                <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Verify</button>
+                        </form>
+
+                        <div class="mt-5">
+                            <button id="otpBackBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Back</button>
+                        </div>
+                    </div>
+
+                    <div id="resetRequestZone" class="hidden">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Password Reset</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Request a reset link</p>
+                        </div>
+
+                        <form id="resetRequestForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="resetUsername">Username</label>
+                                <input id="resetUsername" type="text" autocomplete="username" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Send reset link</button>
+                        </form>
+
+                        <div class="mt-5">
+                            <button id="resetRequestBackBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Back</button>
+                        </div>
+                    </div>
+
+                    <div id="resetZone" class="hidden">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Set New Password</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter your reset token and a new password</p>
+                        </div>
+
+                        <form id="resetForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="resetToken">Reset token</label>
+                                <input id="resetToken" type="text" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="newPassword">New password</label>
+                                <input id="newPassword" type="password" autocomplete="new-password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Update password</button>
+                        </form>
+
+                        <div class="mt-5">
+                            <button id="resetBackBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Back</button>
+                        </div>
+                    </div>
+
+                    <div id="credentialsZone" class="hidden">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Connect Library</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter the library credentials for this session</p>
+                        </div>
+
+                        <form id="credentialsForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="libraryId">Library ID</label>
+                                <input id="libraryId" type="text" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="apiKey">API Key</label>
+                                <input id="apiKey" type="password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Open Dashboard</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden lg:flex lg:w-1/2 bg-gray-50 dark:bg-black items-center justify-center">
+                <div class="max-w-lg px-10">
+                    <div class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                        <h2 class="text-xl font-semibold text-gray-800 dark:text-white/90">Secure Video Operations</h2>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Enterprise dashboard for uploads, collections, and embeds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardZone" class="hidden">
+        <div class="flex h-screen overflow-hidden">
+            <aside class="sidebar fixed left-0 top-0 z-9999 flex h-screen w-[290px] flex-col overflow-y-hidden border-r border-gray-200 bg-white px-5 dark:border-gray-800 dark:bg-black lg:static lg:translate-x-0">
+                <div class="flex items-center justify-between gap-2 pt-8 pb-7">
+                    <div class="inline-flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white font-semibold">SV</div>
+                        <div class="text-gray-800 dark:text-white/90 font-semibold">StreamVault</div>
+                    </div>
+                </div>
+                <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+                    <nav>
+                        <div>
+                            <h3 class="mb-4 text-xs uppercase leading-[20px] text-gray-400">Menu</h3>
+                            <ul class="flex flex-col gap-2 mb-6">
+                                <li>
+                                    <button id="navDashboardBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Dashboard</button>
+                                </li>
+                                <li>
+                                    <button id="navSettingsBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Settings</button>
+                                </li>
+                                <li>
+                                    <button id="logoutBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-white/5">Logout</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="relative flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
+                <header class="sticky top-0 z-999 flex w-full bg-white border-b border-gray-200 dark:bg-black dark:border-gray-800">
+                    <div class="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6">
+                        <div>
+                            <h1 class="text-lg font-semibold text-gray-800 dark:text-white/90">Video Library</h1>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Manage uploads, collections, and embeds</p>
+                        </div>
+                    </div>
+                </header>
+
+                <main>
+                    <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+                        <div id="dashboardView">
+                            <div class="grid grid-cols-12 gap-4 md:gap-6">
+                                <div class="col-span-12">
+                                    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                            <div class="flex-1">
+                                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="videoFile">Upload videos</label>
+                                                <input type="file" id="videoFile" accept="video/*" multiple class="block w-full cursor-pointer rounded-lg border border-gray-300 bg-transparent text-sm text-gray-800 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-800 hover:file:bg-gray-200 dark:border-gray-700 dark:text-white/90 dark:file:bg-white/5 dark:file:text-white/90" />
+                                            </div>
+                                            <button id="uploadBtn" class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Upload</button>
+                                        </div>
+                                        <div id="uploadStatus" class="mt-4"></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-12">
+                                    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                            <div class="w-full md:max-w-md">
+                                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="collectionSelect">Collection</label>
+                                                <select id="collectionSelect" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90">
+                                                    <option value="all">All Videos</option>
+                                                </select>
+                                            </div>
+                                            <button id="refreshBtn" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Refresh</button>
+                                        </div>
+                                        <div id="galleryGrid" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="settingsView" class="hidden">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Profile & Security</h2>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Change admin password</p>
+
+                                <form id="changePasswordForm" class="mt-5 grid grid-cols-1 gap-4 max-w-md">
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="currentPassword">Current password</label>
+                                        <input id="currentPassword" type="password" autocomplete="current-password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                    </div>
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="nextPassword">New password</label>
+                                        <input id="nextPassword" type="password" autocomplete="new-password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                    </div>
+                                    <button type="submit" id="changePasswordBtn" class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Update password</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div id="videoModalOverlay" class="fixed inset-0 z-99999 hidden flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
+        <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div class="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-800 dark:bg-black">
+                <h3 id="videoModalTitle" class="text-base font-semibold text-gray-800 dark:text-white/90">Video Details</h3>
+                <button id="videoModalCloseX" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Close</button>
+            </div>
+
+            <div class="p-5">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="editVideoId">Video ID</label>
+                        <input type="text" id="editVideoId" readonly class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 dark:border-gray-700 dark:text-white/90" />
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="editVideoTitle">Title</label>
+                        <input type="text" id="editVideoTitle" placeholder="Enter a title" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="editVideoCollection">Collection</label>
+                        <select id="editVideoCollection" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90">
+                            <option value="">No Collection</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Embed</div>
+
+                        <div class="grid gap-3">
+                            <div>
+                                <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Embed link</div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="embedUrl" readonly class="h-11 flex-1 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 dark:border-gray-700 dark:text-white/90" />
+                                    <button id="copyEmbedUrl" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Copy</button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Iframe code</div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="embedIframe" readonly class="h-11 flex-1 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 dark:border-gray-700 dark:text-white/90" />
+                                    <button id="copyEmbedIframe" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Copy</button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" id="embedAutoplay" class="h-4 w-4 rounded border-gray-300 text-brand-500" /> Autoplay</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" id="embedMuted" class="h-4 w-4 rounded border-gray-300 text-brand-500" checked /> Muted</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" id="embedLoop" class="h-4 w-4 rounded border-gray-300 text-brand-500" /> Loop</label>
+                                <label class="inline-flex items-center gap-2"><input type="checkbox" id="embedControls" class="h-4 w-4 rounded border-gray-300 text-brand-500" checked /> Controls</label>
+                            </div>
+
+                            <div>
+                                <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Preview</div>
+                                <div class="overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-gray-800">
+                                    <iframe id="embedPreview" title="Embed preview" class="block h-[260px] w-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-900">
+                <button id="videoModalCancel" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Cancel</button>
+                <button id="videoModalSave" class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/tailadmin/bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js"></script>
+
+    <script>
+        let currentLibraryId = null;
+        let currentCollectionId = 'all';
+        let cachedVideos = [];
+        let cachedCollections = [];
+        let isUploading = false;
+        const UPLOAD_CONCURRENCY = 3;
+        let activeVideoGuid = null;
+
+        // DOM Elements
+        const authShell = document.getElementById('authShell');
+        const toastHost = document.getElementById('toastHost');
+        const authZone = document.getElementById('authZone');
+        const otpZone = document.getElementById('otpZone');
+        const resetRequestZone = document.getElementById('resetRequestZone');
+        const resetZone = document.getElementById('resetZone');
+        const credentialsZone = document.getElementById('credentialsZone');
+        const dashboardZone = document.getElementById('dashboardZone');
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const otpForm = document.getElementById('otpForm');
+        const resetRequestForm = document.getElementById('resetRequestForm');
+        const resetForm = document.getElementById('resetForm');
+        const credentialsForm = document.getElementById('credentialsForm');
+
+        const adminUsernameInput = document.getElementById('adminUsername');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        const otpCodeInput = document.getElementById('otpCode');
+        const otpBackBtn = document.getElementById('otpBackBtn');
+        const resetUsernameInput = document.getElementById('resetUsername');
+        const resetRequestBackBtn = document.getElementById('resetRequestBackBtn');
+        const resetTokenInput = document.getElementById('resetToken');
+        const newPasswordInput = document.getElementById('newPassword');
+        const resetBackBtn = document.getElementById('resetBackBtn');
+
+        const libraryIdInput = document.getElementById('libraryId');
+        const apiKeyInput = document.getElementById('apiKey');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const videoFileInput = document.getElementById('videoFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const collectionSelect = document.getElementById('collectionSelect');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        const navDashboardBtn = document.getElementById('navDashboardBtn');
+        const navSettingsBtn = document.getElementById('navSettingsBtn');
+        const dashboardView = document.getElementById('dashboardView');
+        const settingsView = document.getElementById('settingsView');
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        const currentPasswordInput = document.getElementById('currentPassword');
+        const nextPasswordInput = document.getElementById('nextPassword');
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const videoModalOverlay = document.getElementById('videoModalOverlay');
+        const videoModalCloseX = document.getElementById('videoModalCloseX');
+        const videoModalCancel = document.getElementById('videoModalCancel');
+        const videoModalSave = document.getElementById('videoModalSave');
+        const editVideoId = document.getElementById('editVideoId');
+        const editVideoTitle = document.getElementById('editVideoTitle');
+        const editVideoCollection = document.getElementById('editVideoCollection');
+
+        const embedUrl = document.getElementById('embedUrl');
+        const embedIframe = document.getElementById('embedIframe');
+        const embedPreview = document.getElementById('embedPreview');
+        const embedAutoplay = document.getElementById('embedAutoplay');
+        const embedMuted = document.getElementById('embedMuted');
+        const embedLoop = document.getElementById('embedLoop');
+        const embedControls = document.getElementById('embedControls');
+        const copyEmbedUrl = document.getElementById('copyEmbedUrl');
+        const copyEmbedIframe = document.getElementById('copyEmbedIframe');
+
+        function showZone(zone) {
+            [authZone, otpZone, resetRequestZone, resetZone, credentialsZone].forEach(z => z.classList.add('hidden'));
+            zone.classList.remove('hidden');
+        }
+
+        function showAppShell(which) {
+            if (which === 'dashboard') {
+                if (authShell) authShell.classList.add('hidden');
+                if (dashboardZone) dashboardZone.classList.remove('hidden');
+                showView('dashboard');
+                return;
+            }
+            if (dashboardZone) dashboardZone.classList.add('hidden');
+            if (authShell) authShell.classList.remove('hidden');
+        }
+
+        function showView(which) {
+            if (!dashboardView || !settingsView) return;
+            if (which === 'settings') {
+                dashboardView.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+                return;
+            }
+            settingsView.classList.add('hidden');
+            dashboardView.classList.remove('hidden');
+        }
+
+        async function bootstrap() {
+            const params = new URLSearchParams(window.location.search);
+            const resetToken = params.get('resetToken');
+            if (resetToken) {
+                resetTokenInput.value = resetToken;
+                showZone(resetZone);
+                return;
+            }
+
+            try {
+                const me = await apiJson('/api/auth/me');
+                if (me.needsOtp) {
+                    showZone(otpZone);
+                    return;
+                }
+
+                if (me.authenticated) {
+                    if (me.streamConfigured) {
+                        showAppShell('dashboard');
+                        await ensureStreamInfo();
+                        await fetchCollections();
+                        await fetchVideos();
+                    } else {
+                        showAppShell('auth');
+                        showZone(credentialsZone);
+                    }
+                } else {
+                    showAppShell('auth');
+                    showZone(authZone);
+                }
+            } catch {
+                showAppShell('auth');
+                showZone(authZone);
+            }
+        }
+
+        async function ensureStreamInfo() {
+            if (currentLibraryId) return;
+            try {
+                const info = await apiJson('/api/session/stream-info', { method: 'GET' });
+                if (info?.libraryId) {
+                    currentLibraryId = String(info.libraryId);
+                }
+            } catch {
+                // ignore
+            }
+        }
+
+        adminLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = adminUsernameInput.value.trim();
+            const password = adminPasswordInput.value;
+            if (!username || !password) {
+                showMessage('Enter username and password', 'error');
+                return;
+            }
+
+            try {
+                await apiJson('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                adminPasswordInput.value = '';
+                showZone(otpZone);
+            } catch (err) {
+                showMessage(`Login failed: ${err.message}`, 'error');
+            }
+        });
+
+        otpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otp = otpCodeInput.value.trim();
+            if (!otp) {
+                showMessage('Enter verification code', 'error');
+                return;
+            }
+            try {
+                await apiJson('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp })
+                });
+                otpCodeInput.value = '';
+                showZone(credentialsZone);
+            } catch (err) {
+                showMessage(`Verification failed: ${err.message}`, 'error');
+            }
+        });
+
+        otpBackBtn.addEventListener('click', async () => {
+            try { await apiJson('/api/auth/logout', { method: 'POST' }); } catch {}
+            showZone(authZone);
+        });
+
+        forgotPasswordBtn.addEventListener('click', () => {
+            resetUsernameInput.value = adminUsernameInput.value || '';
+            showZone(resetRequestZone);
+        });
+
+        resetRequestBackBtn.addEventListener('click', () => showZone(authZone));
+
+        resetRequestForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = resetUsernameInput.value.trim();
+            if (!username) {
+                showMessage('Enter username', 'error');
+                return;
+            }
+            try {
+                await apiJson('/api/auth/request-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                showMessage('If the account exists, a reset link has been sent', 'success');
+                showZone(authZone);
+            } catch (err) {
+                showMessage(`Request failed: ${err.message}`, 'error');
+            }
+        });
+
+        resetBackBtn.addEventListener('click', () => {
+            window.history.replaceState({}, '', window.location.pathname);
+            showZone(authZone);
+        });
+
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = resetTokenInput.value.trim();
+            const newPassword = newPasswordInput.value;
+            if (!token || !newPassword) {
+                showMessage('Enter token and new password', 'error');
+                return;
+            }
+            try {
+                await apiJson('/api/auth/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, newPassword })
+                });
+                newPasswordInput.value = '';
+                showMessage('Password updated. Please sign in again.', 'success');
+                window.history.replaceState({}, '', window.location.pathname);
+                showZone(authZone);
+            } catch (err) {
+                showMessage(`Reset failed: ${err.message}`, 'error');
+            }
+        });
+
+        credentialsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const libraryId = libraryIdInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            if (!libraryId || !apiKey) {
+                showMessage('Enter library ID and API key', 'error');
+                return;
+            }
+            try {
+                await apiJson('/api/session/stream-credentials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ libraryId, apiKey })
+                });
+                currentLibraryId = libraryId;
+                libraryIdInput.value = '';
+                apiKeyInput.value = '';
+
+                credentialsZone.classList.add('hidden');
+                showAppShell('dashboard');
+                await fetchCollections();
+                await fetchVideos();
+            } catch (err) {
+                showMessage(`Failed to connect: ${err.message}`, 'error');
+            }
+        });
+
+        // Logout Handler
+        logoutBtn.addEventListener('click', () => {
+            currentLibraryId = null;
+            currentCollectionId = 'all';
+            cachedVideos = [];
+            cachedCollections = [];
+            
+            // Switch to login
+            showAppShell('auth');
+            showZone(authZone);
+            
+            // Clear gallery
+            galleryGrid.innerHTML = '';
+            if (collectionSelect) {
+                collectionSelect.innerHTML = '<option value="all">All Videos</option>';
+            }
+
+            closeVideoModal();
+
+            apiJson('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        });
+
+        videoModalOverlay.addEventListener('click', (e) => {
+            if (e.target === videoModalOverlay) closeVideoModal();
+        });
+
+        videoModalCloseX.addEventListener('click', () => closeVideoModal());
+        videoModalCancel.addEventListener('click', () => closeVideoModal());
+
+        videoModalSave.addEventListener('click', async () => {
+            if (!activeVideoGuid) return;
+
+            const nextTitle = editVideoTitle.value.trim();
+            const nextCollectionId = editVideoCollection.value;
+
+            if (!nextTitle) {
+                showMessage('Title cannot be empty', 'error');
+                return;
+            }
+
+            videoModalSave.disabled = true;
+            videoModalSave.textContent = 'Saving...';
+            try {
+                await updateVideo(activeVideoGuid, {
+                    title: nextTitle,
+                    collectionId: nextCollectionId ? nextCollectionId : null
+                });
+                showMessage('Video updated successfully', 'success');
+                closeVideoModal();
+                await fetchCollections();
+                await fetchVideos();
+            } catch (err) {
+                console.error('Update error:', err);
+                showMessage(`Update failed: ${err.message}`, 'error');
+            } finally {
+                videoModalSave.disabled = false;
+                videoModalSave.textContent = 'Save';
+            }
+        });
+
+        collectionSelect.addEventListener('change', () => {
+            currentCollectionId = collectionSelect.value;
+            renderFilteredVideos();
+        });
+
+        refreshBtn.addEventListener('click', async () => {
+            await fetchCollections();
+            await fetchVideos();
+        });
+
+        // Upload Handler
+        uploadBtn.addEventListener('click', async () => {
+            if (isUploading) return;
+
+            const files = Array.from(videoFileInput.files || []);
+
+            if (files.length === 0) {
+                showMessage('Please select one or more video files', 'error');
+                return;
+            }
+
+            await uploadVideos(files);
+        });
+
+        async function fetchCollections() {
+            try {
+                const response = await fetch(
+                    `/api/collections`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                cachedCollections = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+                renderCollections();
+            } catch (error) {
+                console.error('Error fetching collections:', error);
+                cachedCollections = [];
+                renderCollections();
+            }
+        }
+
+        function renderCollections() {
+            const previous = currentCollectionId;
+
+            collectionSelect.innerHTML = '<option value="all">All Videos</option>';
+
+            cachedCollections
+                .slice()
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+                .forEach((c) => {
+                    const id = c.guid || c.id || c.collectionId;
+                    if (!id) return;
+                    const opt = document.createElement('option');
+                    opt.value = String(id);
+                    opt.textContent = c.name ? String(c.name) : String(id);
+                    collectionSelect.appendChild(opt);
+                });
+
+            if (previous && [...collectionSelect.options].some(o => o.value === previous)) {
+                collectionSelect.value = previous;
+                currentCollectionId = previous;
+            } else {
+                collectionSelect.value = 'all';
+                currentCollectionId = 'all';
+            }
+
+            renderEditCollections();
+        }
+
+        function renderEditCollections() {
+            editVideoCollection.innerHTML = '<option value="">No Collection</option>';
+            cachedCollections
+                .slice()
+                .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+                .forEach((c) => {
+                    const id = c.guid || c.id || c.collectionId;
+                    if (!id) return;
+                    const opt = document.createElement('option');
+                    opt.value = String(id);
+                    opt.textContent = c.name ? String(c.name) : String(id);
+                    editVideoCollection.appendChild(opt);
+                });
+        }
+
+        // Fetch Videos Function
+        async function fetchVideos() {
+            try {
+                galleryGrid.innerHTML = '<div class="loading">Loading videos...</div>';
+                
+                const response = await fetch(
+                    `/api/videos`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                cachedVideos = data.items || [];
+                renderFilteredVideos();
+                
+            } catch (error) {
+                console.error('Error fetching videos:', error);
+                galleryGrid.innerHTML = '<div class="error">Failed to load videos. Please check your credentials.</div>';
+            }
+        }
+
+        function renderFilteredVideos() {
+            if (!Array.isArray(cachedVideos)) {
+                cachedVideos = [];
+            }
+
+            if (currentCollectionId === 'all') {
+                renderVideos(cachedVideos);
+                return;
+            }
+
+            const filtered = cachedVideos.filter(v => {
+                const vCollectionId = v.collectionId || v.collectionID || v.collectionGuid || v.collectionGUID || v.collection;
+                return vCollectionId != null && String(vCollectionId) === String(currentCollectionId);
+            });
+
+            renderVideos(filtered);
+        }
+
+        // Render Videos in Gallery
+        function renderVideos(videos) {
+            if (videos.length === 0) {
+                galleryGrid.innerHTML = '<div class="col-span-full rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">No videos found. Upload your first video!</div>';
+                return;
+            }
+            
+            galleryGrid.innerHTML = videos.map(video => `
+                <div class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900" data-guid="${video.guid}">
+                    <div class="aspect-video w-full overflow-hidden bg-gray-50 dark:bg-black/40">
+                        <img src="/api/thumb/${video.guid}/${video.thumbnailFileName}" 
+                            alt="${video.title}" 
+                            class="h-full w-full object-cover"
+                            onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iI2Y3ZmFmYyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjNzE4MDk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gVGh1bWJuYWlsPC90ZXh0Pjwvc3ZnPg=='">
+                    </div>
+                    <div class="flex flex-1 flex-col p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div data-role="titleText" class="line-clamp-2 text-sm font-semibold leading-5 text-gray-800 dark:text-white/90" title="${video.title}">${video.title}</div>
+                                <input data-role="titleInput" type="text" class="mt-1 hidden h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" value="${String(video.title || '').replace(/"/g, '&quot;')}" />
+                            </div>
+                            <div class="hidden shrink-0 items-center gap-1" data-role="renameActions">
+                                <button type="button" data-action="renameSave" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white hover:bg-brand-600" title="Save">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                                <button type="button" data-action="renameCancel" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5" title="Cancel">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-row flex-wrap items-center gap-2 sm:flex-nowrap sm:overflow-x-auto">
+                            <button type="button" data-action="copyLink" class="inline-flex h-10 min-w-[110px] flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:border-gray-600 dark:hover:bg-white/5">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.07 0l1.41-1.41a5 5 0 0 0-7.07-7.07L10 4.86" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.07 0L5.52 12.4a5 5 0 1 0 7.07 7.07L14 18.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Link
+                            </button>
+                            <button type="button" data-action="copyIframe" class="inline-flex h-10 min-w-[110px] flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:border-gray-600 dark:hover:bg-white/5">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 9l-3 3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 9l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 7l-4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Iframe
+                            </button>
+                            <button type="button" data-action="rename" class="inline-flex h-10 min-w-[110px] flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:border-gray-600 dark:hover:bg-white/5">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Rename
+                            </button>
+                            <button type="button" data-action="details" class="inline-flex h-10 min-w-[110px] flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:border-gray-600 dark:hover:bg-white/5">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 9h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Details
+                            </button>
+                            <button type="button" data-action="delete" class="inline-flex h-10 min-w-[110px] flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-600 px-3 text-xs font-semibold text-white shadow-sm hover:border-red-300 hover:bg-red-700 dark:border-red-500/50 dark:hover:border-red-400">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getCardElForGuid(videoGuid) {
+            if (!galleryGrid) return null;
+            return galleryGrid.querySelector(`[data-guid="${CSS.escape(String(videoGuid))}"]`);
+        }
+
+        function enterRenameMode(videoGuid) {
+            const card = getCardElForGuid(videoGuid);
+            if (!card) return;
+
+            const titleText = card.querySelector('[data-role="titleText"]');
+            const titleInput = card.querySelector('[data-role="titleInput"]');
+            const renameActions = card.querySelector('[data-role="renameActions"]');
+            if (!titleText || !titleInput || !renameActions) return;
+
+            titleText.classList.add('hidden');
+            titleInput.classList.remove('hidden');
+            renameActions.classList.remove('hidden');
+            renameActions.classList.add('inline-flex');
+            titleInput.focus();
+            titleInput.select();
+        }
+
+        function exitRenameMode(videoGuid, { restoreValue = true } = {}) {
+            const card = getCardElForGuid(videoGuid);
+            if (!card) return;
+
+            const titleText = card.querySelector('[data-role="titleText"]');
+            const titleInput = card.querySelector('[data-role="titleInput"]');
+            const renameActions = card.querySelector('[data-role="renameActions"]');
+            if (!titleText || !titleInput || !renameActions) return;
+
+            if (restoreValue) {
+                const v = (cachedVideos || []).find(v => String(v.guid) === String(videoGuid));
+                titleInput.value = String(v?.title || '');
+            }
+
+            titleText.classList.remove('hidden');
+            titleInput.classList.add('hidden');
+            renameActions.classList.add('hidden');
+            renameActions.classList.remove('inline-flex');
+        }
+
+        async function saveRename(videoGuid) {
+            const card = getCardElForGuid(videoGuid);
+            if (!card) return;
+            const titleInput = card.querySelector('[data-role="titleInput"]');
+            const nextTitle = String(titleInput?.value || '').trim();
+            if (!nextTitle) {
+                showMessage('Title cannot be empty', 'error');
+                return;
+            }
+
+            const v = (cachedVideos || []).find(v => String(v.guid) === String(videoGuid));
+            const vCollectionId = v?.collectionId || v?.collectionID || v?.collectionGuid || v?.collectionGUID || v?.collection;
+
+            try {
+                await updateVideo(videoGuid, {
+                    title: nextTitle,
+                    collectionId: vCollectionId != null ? String(vCollectionId) : null
+                });
+
+                if (v) v.title = nextTitle;
+                const titleText = card.querySelector('[data-role="titleText"]');
+                if (titleText) {
+                    titleText.textContent = nextTitle;
+                    titleText.setAttribute('title', nextTitle);
+                }
+                exitRenameMode(videoGuid, { restoreValue: false });
+                showMessage('Title updated', 'success');
+            } catch (err) {
+                showMessage(`Rename failed: ${err.message}`, 'error');
+            }
+        }
+
+        async function copyEmbedLinkForGuid(videoGuid) {
+            await ensureStreamInfo();
+            const url = buildEmbedUrlForGuid(videoGuid, { muted: true, controls: true });
+            await copyText(url);
+        }
+
+        async function copyEmbedIframeForGuid(videoGuid) {
+            await ensureStreamInfo();
+            const url = buildEmbedUrlForGuid(videoGuid, { muted: true, controls: true });
+            const iframe = url
+                ? `<iframe src="${url}" loading="lazy" style="border:0;width:100%;height:360px;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`
+                : '';
+            await copyText(iframe);
+        }
+
+        if (galleryGrid) {
+            galleryGrid.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const card = btn.closest('[data-guid]');
+                const guid = card?.getAttribute('data-guid');
+                if (!guid) return;
+
+                const action = btn.getAttribute('data-action');
+                try {
+                    if (action === 'copyLink') return await copyEmbedLinkForGuid(guid);
+                    if (action === 'copyIframe') return await copyEmbedIframeForGuid(guid);
+                    if (action === 'rename') return enterRenameMode(guid);
+                    if (action === 'renameSave') return await saveRename(guid);
+                    if (action === 'renameCancel') return exitRenameMode(guid);
+                    if (action === 'details') return openVideoModal(guid);
+                    if (action === 'delete') return deleteVideo(guid);
+                } catch (err) {
+                    showMessage(err?.message || 'Action failed', 'error');
+                }
+            });
+
+            galleryGrid.addEventListener('keydown', async (e) => {
+                const input = e.target.closest('input[data-role="titleInput"]');
+                if (!input) return;
+                const card = input.closest('[data-guid]');
+                const guid = card?.getAttribute('data-guid');
+                if (!guid) return;
+
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    await saveRename(guid);
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    exitRenameMode(guid);
+                }
+            });
+        }
+
+        function openVideoModal(videoGuid) {
+            const video = (cachedVideos || []).find(v => String(v.guid) === String(videoGuid));
+            if (!video) {
+                showMessage('Video not found', 'error');
+                return;
+            }
+
+            activeVideoGuid = String(videoGuid);
+            editVideoId.value = String(video.guid || '');
+            editVideoTitle.value = String(video.title || '');
+
+            const vCollectionId = video.collectionId || video.collectionID || video.collectionGuid || video.collectionGUID || video.collection;
+            editVideoCollection.value = vCollectionId != null ? String(vCollectionId) : '';
+
+            ensureStreamInfo().then(() => {
+                updateEmbedPanel();
+            });
+
+            videoModalOverlay.classList.remove('hidden');
+        }
+
+        function closeVideoModal() {
+            activeVideoGuid = null;
+            if (videoModalOverlay) videoModalOverlay.classList.add('hidden');
+            if (embedPreview) embedPreview.src = '';
+        }
+
+        function buildEmbedUrl() {
+            if (!currentLibraryId || !activeVideoGuid) return '';
+
+            // Note: provider domain will be visible when using embed.
+            const base = `https://iframe.mediadelivery.net/embed/${encodeURIComponent(currentLibraryId)}/${encodeURIComponent(activeVideoGuid)}`;
+
+            const params = new URLSearchParams();
+            if (embedAutoplay?.checked) params.set('autoplay', 'true');
+            if (embedMuted?.checked) params.set('muted', 'true');
+            if (embedLoop?.checked) params.set('loop', 'true');
+            if (embedControls && !embedControls.checked) params.set('controls', 'false');
+
+            const qs = params.toString();
+            return qs ? `${base}?${qs}` : base;
+        }
+
+        function buildEmbedUrlForGuid(videoGuid, opts = {}) {
+            if (!currentLibraryId || !videoGuid) return '';
+
+            // Note: provider domain will be visible when using embed.
+            const base = `https://iframe.mediadelivery.net/embed/${encodeURIComponent(currentLibraryId)}/${encodeURIComponent(String(videoGuid))}`;
+
+            const params = new URLSearchParams();
+            if (opts.autoplay) params.set('autoplay', 'true');
+            if (opts.muted) params.set('muted', 'true');
+            if (opts.loop) params.set('loop', 'true');
+            if (opts.controls === false) params.set('controls', 'false');
+
+            const qs = params.toString();
+            return qs ? `${base}?${qs}` : base;
+        }
+
+        function updateEmbedPanel() {
+            const url = buildEmbedUrl();
+            if (embedUrl) embedUrl.value = url;
+
+            const iframe = url
+                ? `<iframe src="${url}" loading="lazy" style="border:0;width:100%;height:360px;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`
+                : '';
+            if (embedIframe) embedIframe.value = iframe;
+
+            if (embedPreview) {
+                embedPreview.src = url;
+            }
+        }
+
+        async function copyText(value) {
+            const text = String(value || '');
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                showMessage('Copied to clipboard', 'success');
+            } catch {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    showMessage('Copied to clipboard', 'success');
+                } catch {
+                    showMessage('Copy failed', 'error');
+                }
+            }
+        }
+
+        [embedAutoplay, embedMuted, embedLoop, embedControls].forEach((el) => {
+            if (!el) return;
+            el.addEventListener('change', () => updateEmbedPanel());
+        });
+
+        if (copyEmbedUrl) {
+            copyEmbedUrl.addEventListener('click', () => copyText(embedUrl?.value));
+        }
+        if (copyEmbedIframe) {
+            copyEmbedIframe.addEventListener('click', () => copyText(embedIframe?.value));
+        }
+
+        async function updateVideo(videoGuid, payload) {
+            const response = await fetch(`/api/videos/${videoGuid}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update video: ${response.status}`);
+            }
+
+            return response.json().catch(() => null);
+        }
+
+        function renderUploadStatus(items) {
+            if (!uploadStatus) return;
+
+            uploadStatus.innerHTML = items.map(i => {
+                const safeName = String(i.name || '');
+                const safeState = String(i.state || '');
+                const pct = Number.isFinite(i.progress) ? Math.max(0, Math.min(100, Math.round(i.progress))) : 0;
+                return `
+                    <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-black/30">
+                        <div class="flex items-center justify-between gap-3 text-sm text-gray-700 dark:text-gray-300">
+                            <div class="min-w-0">
+                                <div class="truncate font-medium text-gray-800 dark:text-white/90">${safeName}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">${safeState}</div>
+                            </div>
+                            <div class="text-sm font-medium">${pct}%</div>
+                        </div>
+                        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+                            <div class="h-full rounded-full bg-brand-500" style="width: ${pct}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function uploadVideos(files) {
+            const items = files.map(f => ({ name: f.name, state: 'Queued', progress: 0 }));
+            renderUploadStatus(items);
+
+            isUploading = true;
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = `Uploading (0/${files.length})...`;
+
+            let succeeded = 0;
+            let failed = 0;
+            try {
+                let nextIndex = 0;
+
+                const worker = async () => {
+                    while (true) {
+                        const idx = nextIndex;
+                        nextIndex++;
+                        if (idx >= files.length) return;
+
+                        const file = files[idx];
+                        items[idx].state = 'Uploading...';
+                        items[idx].progress = 0;
+                        renderUploadStatus(items);
+
+                        try {
+                            await uploadSingleVideo(file, (pct) => {
+                                items[idx].progress = pct;
+                                renderUploadStatus(items);
+                            });
+                            items[idx].state = 'Done';
+                            items[idx].progress = 100;
+                            succeeded++;
+                        } catch (err) {
+                            items[idx].state = 'Failed';
+                            failed++;
+                        } finally {
+                            uploadBtn.textContent = `Uploading (${succeeded + failed}/${files.length})...`;
+                            renderUploadStatus(items);
+                        }
+                    }
+                };
+
+                const concurrency = Math.max(1, Math.min(UPLOAD_CONCURRENCY, files.length));
+                await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+                if (failed === 0) {
+                    showMessage(`Upload complete: ${succeeded}/${files.length} succeeded`, 'success');
+                } else {
+                    showMessage(`Upload complete: ${succeeded} succeeded, ${failed} failed`, 'error');
+                }
+                videoFileInput.value = '';
+                await fetchVideos();
+            } catch (error) {
+                console.error('Batch upload error:', error);
+                showMessage(`Upload failed: ${error.message}`, 'error');
+                await fetchVideos();
+            } finally {
+                isUploading = false;
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Video';
+            }
+        }
+
+        // Upload Single Video Function
+        async function uploadSingleVideo(file, onProgress) {
+            try {
+                // Preferred path: direct-to-provider via TUS with presigned signature.
+                // (Provider domain will be visible in Network tab; API key stays server-side.)
+                if (window.tus && window.tus.Upload) {
+                    const presign = await apiJson('/api/uploads/presign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: file.name,
+                            filetype: file.type,
+                            ...(currentCollectionId && currentCollectionId !== 'all' ? { collectionId: currentCollectionId } : {})
+                        })
+                    });
+
+                    await tusUpload(file, presign, onProgress);
+                    return;
+                }
+
+                // Fallback: backend relay upload
+                const form = new FormData();
+                form.append('file', file, file.name);
+                form.append('title', file.name);
+                if (currentCollectionId && currentCollectionId !== 'all') {
+                    form.append('collectionId', String(currentCollectionId));
+                }
+                await xhrUploadMultipart('/api/videos/upload', form, onProgress);
+            } catch (error) {
+                console.error('Upload error:', error);
+                throw error;
+            }
+        }
+
+        function tusUpload(file, presign, onProgress) {
+            return new Promise((resolve, reject) => {
+                const upload = new tus.Upload(file, {
+                    endpoint: presign.endpoint,
+                    retryDelays: [0, 3000, 5000, 10000, 20000, 60000, 60000],
+                    headers: {
+                        AuthorizationSignature: presign.headers.AuthorizationSignature,
+                        AuthorizationExpire: presign.headers.AuthorizationExpire,
+                        VideoId: presign.headers.VideoId,
+                        LibraryId: presign.headers.LibraryId
+                    },
+                    metadata: presign.metadata || {
+                        filetype: file.type,
+                        title: file.name
+                    },
+                    onError: function (error) {
+                        reject(error);
+                    },
+                    onProgress: function (bytesUploaded, bytesTotal) {
+                        if (typeof onProgress !== 'function') return;
+                        if (!bytesTotal) return;
+                        const pct = (bytesUploaded / bytesTotal) * 100;
+                        onProgress(pct);
+                    },
+                    onSuccess: function () {
+                        if (typeof onProgress === 'function') onProgress(100);
+                        resolve();
+                    }
+                });
+
+                upload.findPreviousUploads().then(function (previousUploads) {
+                    if (previousUploads.length) {
+                        upload.resumeFromPreviousUpload(previousUploads[0]);
+                    }
+                    upload.start();
+                }).catch(() => {
+                    upload.start();
+                });
+            });
+        }
+
+        function xhrUploadMultipart(url, formData, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+
+                if (typeof onProgress === 'function') {
+                    xhr.upload.onprogress = (event) => {
+                        if (!event.lengthComputable) return;
+                        const pct = (event.loaded / event.total) * 100;
+                        onProgress(pct);
+                    };
+                }
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        if (typeof onProgress === 'function') onProgress(100);
+                        resolve();
+                        return;
+                    }
+
+                    reject(new Error(`Failed to upload file: ${xhr.status}`));
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.onabort = () => reject(new Error('Upload aborted'));
+
+                xhr.send(formData);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            bootstrap();
+        });
+
+        function apiJson(url, init) {
+            return fetch(url, init).then(async (r) => {
+                if (r.ok) return r.json().catch(() => ({}));
+                const text = await r.text().catch(() => '');
+                let msg = text;
+                try {
+                    const parsed = JSON.parse(text);
+                    msg = parsed?.error || text;
+                } catch {}
+                throw new Error(msg || `HTTP ${r.status}`);
+            });
+        }
+
+        // Delete Video Function
+        async function deleteVideo(videoId) {
+            if (!confirm('Are you sure you want to delete this video?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(
+                    `/api/videos/${videoId}`,
+                    {
+                        method: 'DELETE',
+                        headers: {}
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to delete video: ${response.status}`);
+                }
+                
+                showMessage('Video deleted successfully', 'success');
+                await fetchVideos();
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage(`Delete failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Show message function
+        function showMessage(message, type) {
+            const host = toastHost || document.body;
+            const div = document.createElement('div');
+
+            const isError = String(type) === 'error';
+            const isSuccess = String(type) === 'success';
+            const base = 'mb-3 rounded-xl border px-4 py-3 text-sm shadow-sm';
+            const cls = isError
+                ? `${base} border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200`
+                : isSuccess
+                    ? `${base} border-green-200 bg-green-50 text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-200`
+                    : `${base} border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200`;
+
+            div.className = cls;
+            div.textContent = String(message || '');
+            host.prepend(div);
+
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        if (navDashboardBtn) {
+            navDashboardBtn.addEventListener('click', () => showView('dashboard'));
+        }
+        if (navSettingsBtn) {
+            navSettingsBtn.addEventListener('click', () => showView('settings'));
+        }
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const currentPassword = currentPasswordInput?.value || '';
+                const newPassword = nextPasswordInput?.value || '';
+                if (!currentPassword || !newPassword) {
+                    showMessage('Enter current and new password', 'error');
+                    return;
+                }
+
+                if (changePasswordBtn) {
+                    changePasswordBtn.disabled = true;
+                    changePasswordBtn.textContent = 'Updating...';
+                }
+                try {
+                    await apiJson('/api/auth/change-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ currentPassword, newPassword })
+                    });
+                    if (currentPasswordInput) currentPasswordInput.value = '';
+                    if (nextPasswordInput) nextPasswordInput.value = '';
+                    showMessage('Password updated successfully', 'success');
+                } catch (err) {
+                    showMessage(`Password update failed: ${err.message}`, 'error');
+                } finally {
+                    if (changePasswordBtn) {
+                        changePasswordBtn.disabled = false;
+                        changePasswordBtn.textContent = 'Update password';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
