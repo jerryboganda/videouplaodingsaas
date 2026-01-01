@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "passwordHash": "$2a$12$1qYm6u3DdEC8VcPN82/0t.lFA8iey2FWmxPXrQMkwDOvmb1S9qoHy",
+      "email": "mindreader420123@gmail.com",
+      "role": "superadmin",
+      "libraryId": null,
+      "apiKey": null
+    },
+    {
+      "username": "test",
+      "passwordHash": "$2a$12$i6Q8c.bECCV6CT0s3shkOO0sGiBWRDmNSpitV9/AaAeQ6WtDypSHG",
+      "email": "mindreader_420@yahoo.com",
+      "role": "user"
+    },
+    {
+      "username": "aimsacademy",
+      "passwordHash": "$2a$12$n8L3.ULcm3U9eB6AGQQvsul3RO/CIIHs1azESfB6fD0e4fsbcVREW",
+      "email": "rafaqatmudessar@yahoo.com",
+      "role": "user",
+      "libraryId": "570484",
+      "apiKey": "bd1142a9-3da5-415a-8771ff07b27a-16ce-40a8"
+    }
+  ]
+}

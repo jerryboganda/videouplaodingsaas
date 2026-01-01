@@ -8,7 +8,7 @@
     <link href="/tailadmin/style.css" rel="stylesheet">
 </head>
 <body x-data="{ page: 'app', loaded: false, darkMode: false, stickyMenu: false, sidebarToggle: false, scrollTop: false }" :class="{'dark bg-gray-900': darkMode === true}">
-    <div id="toastHost" class="fixed left-1/2 top-4 z-99999 w-full max-w-xl -translate-x-1/2 px-4"></div>
+    <div id="toastHost" class="pointer-events-none fixed right-4 top-4 z-99999 flex w-full max-w-sm flex-col gap-3 px-2 sm:right-6 sm:top-6 sm:px-0"></div>
 
     <div id="authShell" class="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
         <div class="relative flex flex-col justify-center w-full min-h-screen dark:bg-gray-900 sm:p-0 lg:flex-row">
@@ -24,7 +24,7 @@
                     <div id="authZone">
                         <div class="mb-5 sm:mb-8">
                             <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Sign In</h1>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Use your admin credentials to continue</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Use your credentials to continue</p>
                         </div>
 
                         <form id="adminLoginForm" class="space-y-5">
@@ -39,8 +39,36 @@
                             <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Continue</button>
                         </form>
 
-                        <div class="mt-5">
+                        <div class="mt-5 space-y-3">
                             <button id="forgotPasswordBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Forgot password</button>
+                            <button id="goToRegisterBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Register new user</button>
+                        </div>
+                    </div>
+
+                    <div id="registerZone" class="hidden">
+                        <div class="mb-5 sm:mb-8">
+                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Create Account</h1>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Set username, password, and 2FA email</p>
+                        </div>
+
+                        <form id="registerForm" class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="registerUsername">Username</label>
+                                <input id="registerUsername" type="text" autocomplete="username" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="registerEmail">2FA Email</label>
+                                <input id="registerEmail" type="email" autocomplete="email" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="registerPassword">Password</label>
+                                <input id="registerPassword" type="password" autocomplete="new-password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                            </div>
+                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Create account</button>
+                        </form>
+
+                        <div class="mt-5">
+                            <button id="registerBackBtn" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-black dark:text-white/90 dark:hover:bg-white/5">Back to sign in</button>
                         </div>
                     </div>
 
@@ -105,24 +133,7 @@
                         </div>
                     </div>
 
-                    <div id="credentialsZone" class="hidden">
-                        <div class="mb-5 sm:mb-8">
-                            <h1 class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">Connect Library</h1>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Enter the library credentials for this session</p>
-                        </div>
-
-                        <form id="credentialsForm" class="space-y-5">
-                            <div>
-                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="libraryId">Library ID</label>
-                                <input id="libraryId" type="text" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
-                            </div>
-                            <div>
-                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300" for="apiKey">API Key</label>
-                                <input id="apiKey" type="password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
-                            </div>
-                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Open Dashboard</button>
-                        </form>
-                    </div>
+                    <div id="credentialsZone" class="hidden"></div>
                 </div>
             </div>
 
@@ -158,6 +169,9 @@
                                     <button id="navSettingsBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Settings</button>
                                 </li>
                                 <li>
+                                    <button id="navUsersBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5 hidden">Users</button>
+                                </li>
+                                <li>
                                     <button id="logoutBtn" class="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-white/5">Logout</button>
                                 </li>
                             </ul>
@@ -177,7 +191,17 @@
                 </header>
 
                 <main>
+                    <div id="pageInfoBar" class="hidden w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-2 text-xs font-medium text-white shadow-sm md:text-sm"></div>
                     <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+                        <div id="credAlert" class="hidden mb-4 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-4 text-sm text-amber-900 shadow-sm backdrop-blur dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-50">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]"></div>
+                                <div class="space-y-1">
+                                    <div class="text-sm font-semibold tracking-tight">Stream credentials missing</div>
+                                    <div class="text-xs text-amber-800/90 dark:text-amber-50/80">Library ID and API Key are not set for this account. A superadmin must assign them in the Users panel.</div>
+                                </div>
+                            </div>
+                        </div>
                         <div id="dashboardView">
                             <div class="grid grid-cols-12 gap-4 md:gap-6">
                                 <div class="col-span-12">
@@ -226,6 +250,68 @@
                                     </div>
                                     <button type="submit" id="changePasswordBtn" class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Update password</button>
                                 </form>
+                            </div>
+                        </div>
+
+                        <div id="usersView" class="hidden">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">User Management</h2>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Superadmin only</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                                                <th class="px-3 py-2">Username</th>
+                                                <th class="px-3 py-2">Email</th>
+                                                <th class="px-3 py-2">Role</th>
+                                                <th class="px-3 py-2">Stream Creds</th>
+                                                <th class="px-3 py-2">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody" class="divide-y divide-gray-200 dark:divide-gray-800"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="mt-8 rounded-xl border border-dashed border-gray-300 p-4 dark:border-gray-700">
+                                    <h3 class="text-sm font-semibold text-gray-800 dark:text-white/90 mb-3">Create User</h3>
+                                    <form id="createUserForm" class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createUsername">Username</label>
+                                            <input id="createUsername" type="text" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createEmail">Email (2FA)</label>
+                                            <input id="createEmail" type="email" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createPassword">Password</label>
+                                            <input id="createPassword" type="password" required class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createRole">Role</label>
+                                            <select id="createRole" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90">
+                                                <option value="user">User</option>
+                                                <option value="superadmin">Superadmin</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createLibraryId">Library ID (optional)</label>
+                                            <input id="createLibraryId" type="text" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" for="createApiKey">API Key (optional)</label>
+                                            <input id="createApiKey" type="text" class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:text-white/90" />
+                                        </div>
+                                        <div class="md:col-span-2 lg:col-span-3">
+                                            <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">Create user</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -311,6 +397,8 @@
     <script>
         let currentLibraryId = null;
         let currentCollectionId = 'all';
+        let currentUser = null;
+        let isSuperAdmin = false;
         let cachedVideos = [];
         let cachedCollections = [];
         let isUploading = false;
@@ -324,28 +412,34 @@
         const otpZone = document.getElementById('otpZone');
         const resetRequestZone = document.getElementById('resetRequestZone');
         const resetZone = document.getElementById('resetZone');
+        const registerZone = document.getElementById('registerZone');
         const credentialsZone = document.getElementById('credentialsZone');
         const dashboardZone = document.getElementById('dashboardZone');
         const adminLoginForm = document.getElementById('adminLoginForm');
         const otpForm = document.getElementById('otpForm');
         const resetRequestForm = document.getElementById('resetRequestForm');
         const resetForm = document.getElementById('resetForm');
-        const credentialsForm = document.getElementById('credentialsForm');
 
         const adminUsernameInput = document.getElementById('adminUsername');
         const adminPasswordInput = document.getElementById('adminPassword');
         const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+        const goToRegisterBtn = document.getElementById('goToRegisterBtn');
         const otpCodeInput = document.getElementById('otpCode');
         const otpBackBtn = document.getElementById('otpBackBtn');
         const resetUsernameInput = document.getElementById('resetUsername');
-        const resetRequestBackBtn = document.getElementById('resetRequestBackBtn');
         const resetTokenInput = document.getElementById('resetToken');
         const newPasswordInput = document.getElementById('newPassword');
         const resetBackBtn = document.getElementById('resetBackBtn');
+        const registerForm = document.getElementById('registerForm');
+        const registerUsernameInput = document.getElementById('registerUsername');
+        const registerEmailInput = document.getElementById('registerEmail');
+        const registerPasswordInput = document.getElementById('registerPassword');
+        const registerBackBtn = document.getElementById('registerBackBtn');
 
-        const libraryIdInput = document.getElementById('libraryId');
-        const apiKeyInput = document.getElementById('apiKey');
         const logoutBtn = document.getElementById('logoutBtn');
+        const credAlert = document.getElementById('credAlert');
+        const pageInfoBar = document.getElementById('pageInfoBar');
+        let pageNoticeTimer = null;
         const videoFileInput = document.getElementById('videoFile');
         const uploadBtn = document.getElementById('uploadBtn');
         const galleryGrid = document.getElementById('galleryGrid');
@@ -355,8 +449,10 @@
 
         const navDashboardBtn = document.getElementById('navDashboardBtn');
         const navSettingsBtn = document.getElementById('navSettingsBtn');
+        const navUsersBtn = document.getElementById('navUsersBtn');
         const dashboardView = document.getElementById('dashboardView');
         const settingsView = document.getElementById('settingsView');
+        const usersView = document.getElementById('usersView');
         const changePasswordForm = document.getElementById('changePasswordForm');
         const currentPasswordInput = document.getElementById('currentPassword');
         const nextPasswordInput = document.getElementById('nextPassword');
@@ -379,8 +475,17 @@
         const copyEmbedUrl = document.getElementById('copyEmbedUrl');
         const copyEmbedIframe = document.getElementById('copyEmbedIframe');
 
+        const usersTableBody = document.getElementById('usersTableBody');
+        const createUserForm = document.getElementById('createUserForm');
+        const createUsername = document.getElementById('createUsername');
+        const createEmail = document.getElementById('createEmail');
+        const createPassword = document.getElementById('createPassword');
+        const createRole = document.getElementById('createRole');
+        const createLibraryId = document.getElementById('createLibraryId');
+        const createApiKey = document.getElementById('createApiKey');
+
         function showZone(zone) {
-            [authZone, otpZone, resetRequestZone, resetZone, credentialsZone].forEach(z => z.classList.add('hidden'));
+            [authZone, otpZone, resetRequestZone, resetZone, credentialsZone, registerZone].forEach(z => z.classList.add('hidden'));
             zone.classList.remove('hidden');
         }
 
@@ -388,7 +493,7 @@
             if (which === 'dashboard') {
                 if (authShell) authShell.classList.add('hidden');
                 if (dashboardZone) dashboardZone.classList.remove('hidden');
-                showView('dashboard');
+                showView(isSuperAdmin ? 'dashboard' : 'dashboard');
                 return;
             }
             if (dashboardZone) dashboardZone.classList.add('hidden');
@@ -396,14 +501,196 @@
         }
 
         function showView(which) {
-            if (!dashboardView || !settingsView) return;
-            if (which === 'settings') {
-                dashboardView.classList.add('hidden');
-                settingsView.classList.remove('hidden');
+            if (!dashboardView || !settingsView || !usersView) return;
+            dashboardView.classList.add('hidden');
+            settingsView.classList.add('hidden');
+            usersView.classList.add('hidden');
+            if (which === 'settings') settingsView.classList.remove('hidden');
+            else if (which === 'users') usersView.classList.remove('hidden');
+            else dashboardView.classList.remove('hidden');
+        }
+
+        function updateNavVisibility() {
+            if (!navUsersBtn) return;
+            if (isSuperAdmin) {
+                navUsersBtn.classList.remove('hidden');
+            } else {
+                navUsersBtn.classList.add('hidden');
+            }
+        }
+
+        // Nav handlers
+        navDashboardBtn.addEventListener('click', () => showView('dashboard'));
+        navSettingsBtn.addEventListener('click', () => showView('settings'));
+        if (navUsersBtn) navUsersBtn.addEventListener('click', () => showView('users'));
+
+        function requireStreamOrThrow() {
+            if (!currentLibraryId) throw new Error('Stream library not configured for this user');
+        }
+
+        function setCredAlertVisible(show) {
+            if (!credAlert) return;
+            credAlert.classList.toggle('hidden', !show);
+        }
+
+        function setPageNotice(text, variant = 'info') {
+            if (!pageInfoBar) return;
+            if (!text) {
+                pageInfoBar.classList.add('hidden');
+                pageInfoBar.textContent = '';
                 return;
             }
-            settingsView.classList.add('hidden');
-            dashboardView.classList.remove('hidden');
+            const base = 'w-full px-4 py-2 text-xs font-medium text-white shadow-sm md:text-sm';
+            const cls =
+                variant === 'success'
+                    ? 'bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600'
+                    : variant === 'warn'
+                        ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600'
+                        : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600';
+            pageInfoBar.className = `${base} ${cls}`;
+            pageInfoBar.textContent = String(text);
+            pageInfoBar.classList.remove('hidden');
+        }
+
+        function pageNoticeTemp(text, variant = 'info', duration = 5000) {
+            setPageNotice(text, variant);
+            if (pageNoticeTimer) clearTimeout(pageNoticeTimer);
+            pageNoticeTimer = setTimeout(() => {
+                setPageNotice('');
+                pageNoticeTimer = null;
+            }, duration);
+        }
+
+        function validationNotice(message) {
+            setPageNotice(message, 'warn');
+            showMessage(message, 'error');
+        }
+
+        async function ensureStreamInfo() {
+            if (currentLibraryId) return;
+            await refreshSessionState();
+            requireStreamOrThrow();
+        }
+
+        // --- Superadmin user management helpers ---
+        async function fetchUsers() {
+            if (!isSuperAdmin) return;
+            try {
+                const resp = await apiJson('/api/admin/users', { method: 'GET' });
+                const list = Array.isArray(resp?.users) ? resp.users : [];
+                renderUsers(list);
+            } catch (err) {
+                showMessage(`Failed to load users: ${err.message}`, 'error');
+            }
+        }
+
+        function renderUsers(users) {
+            usersTableBody.innerHTML = '';
+            users.forEach((u) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-3 py-2 text-sm text-gray-800 dark:text-gray-200">${u.username}</td>
+                    <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">${u.email || ''}</td>
+                    <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">${u.role}</td>
+                    <td class="px-3 py-2 text-sm">${u.hasStreamCredentials ? 'Yes' : 'No'}</td>
+                    <td class="px-3 py-2 text-sm flex flex-wrap gap-2">
+                        <button class="px-3 py-1 rounded bg-brand-500 text-white text-xs" data-action="edit" data-username="${u.username}">Edit</button>
+                        <button class="px-3 py-1 rounded bg-red-600 text-white text-xs" data-action="delete" data-username="${u.username}">Delete</button>
+                    </td>
+                `;
+                usersTableBody.appendChild(tr);
+            });
+        }
+
+        usersTableBody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const username = btn.getAttribute('data-username');
+            const action = btn.getAttribute('data-action');
+            if (!username || !action) return;
+
+            if (action === 'delete') {
+                const ok = confirm(`Delete user "${username}"?`);
+                if (!ok) return;
+                try {
+                    await apiJson(`/api/admin/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+                    showMessage('User deleted', 'success');
+                    pageNoticeTemp(`User "${username}" deleted`, 'success', 4000);
+                    await fetchUsers();
+                } catch (err) {
+                    showMessage(`Delete failed: ${err.message}`, 'error');
+                }
+            }
+
+            if (action === 'edit') {
+                const email = prompt('Email for user:', '');
+                if (email === null) return;
+                const role = prompt('Role (superadmin/user):', 'user');
+                if (role === null) return;
+                const libraryId = prompt('Library ID (blank to clear):', '');
+                if (libraryId === null) return;
+                const apiKey = prompt('API Key (blank to clear):', '');
+                if (apiKey === null) return;
+                const password = prompt('New password (leave blank to keep current):', '');
+                try {
+                    await apiJson(`/api/admin/users/${encodeURIComponent(username)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email,
+                            role: role || undefined,
+                            libraryId: libraryId || null,
+                            apiKey: apiKey || null,
+                            ...(password ? { password } : {})
+                        })
+                    });
+                    showMessage('User updated', 'success');
+                    pageNoticeTemp(`User "${username}" updated`, 'success', 4000);
+                    await fetchUsers();
+                } catch (err) {
+                    showMessage(`Update failed: ${err.message}`, 'error');
+                }
+            }
+        });
+
+        createUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiJson('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: createUsername.value.trim(),
+                        email: createEmail.value.trim(),
+                        password: createPassword.value,
+                        role: createRole.value,
+                        libraryId: createLibraryId.value.trim() || null,
+                        apiKey: createApiKey.value.trim() || null
+                    })
+                });
+                showMessage('User created', 'success');
+                pageNoticeTemp('User created', 'success', 4000);
+                createUserForm.reset();
+                await fetchUsers();
+            } catch (err) {
+                showMessage(`Create failed: ${err.message}`, 'error');
+            }
+        });
+
+        async function refreshSessionState() {
+            const status = await apiJson('/api/auth/me', { method: 'GET' });
+            currentUser = status?.user || null;
+            currentLibraryId = currentUser?.libraryId || null;
+            isSuperAdmin = Boolean(currentUser?.role === 'superadmin');
+            updateNavVisibility();
+            setCredAlertVisible(!currentLibraryId);
+            if (currentUser) {
+                const roleLabel = isSuperAdmin ? 'Superadmin' : 'User';
+                setPageNotice(`Signed in as ${currentUser.username} · ${roleLabel}`, 'info');
+            } else {
+                setPageNotice('');
+            }
+            return status;
         }
 
         async function bootstrap() {
@@ -416,22 +703,21 @@
             }
 
             try {
-                const me = await apiJson('/api/auth/me');
-                if (me.needsOtp) {
-                    showZone(otpZone);
-                    return;
-                }
+                await ensureSession();
+            } catch {
+                showAppShell('auth');
+                showZone(authZone);
+            }
+        }
 
-                if (me.authenticated) {
-                    if (me.streamConfigured) {
-                        showAppShell('dashboard');
-                        await ensureStreamInfo();
-                        await fetchCollections();
-                        await fetchVideos();
-                    } else {
-                        showAppShell('auth');
-                        showZone(credentialsZone);
-                    }
+        async function ensureSession() {
+            try {
+                const status = await refreshSessionState();
+                if (status?.authenticated) {
+                    showAppShell('dashboard');
+                    await fetchCollections();
+                    await fetchVideos();
+                    if (isSuperAdmin) await fetchUsers();
                 } else {
                     showAppShell('auth');
                     showZone(authZone);
@@ -442,24 +728,12 @@
             }
         }
 
-        async function ensureStreamInfo() {
-            if (currentLibraryId) return;
-            try {
-                const info = await apiJson('/api/session/stream-info', { method: 'GET' });
-                if (info?.libraryId) {
-                    currentLibraryId = String(info.libraryId);
-                }
-            } catch {
-                // ignore
-            }
-        }
-
         adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = adminUsernameInput.value.trim();
             const password = adminPasswordInput.value;
             if (!username || !password) {
-                showMessage('Enter username and password', 'error');
+                validationNotice('Enter username and password');
                 return;
             }
 
@@ -469,6 +743,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
+
                 adminPasswordInput.value = '';
                 showZone(otpZone);
             } catch (err) {
@@ -480,7 +755,7 @@
             e.preventDefault();
             const otp = otpCodeInput.value.trim();
             if (!otp) {
-                showMessage('Enter verification code', 'error');
+                validationNotice('Enter verification code');
                 return;
             }
             try {
@@ -490,7 +765,13 @@
                     body: JSON.stringify({ otp })
                 });
                 otpCodeInput.value = '';
-                showZone(credentialsZone);
+                await refreshSessionState();
+                showAppShell('dashboard');
+                pageNoticeTemp('Signed in successfully', 'success', 5000);
+                setPageNotice(`Signed in as ${currentUser.username} · ${isSuperAdmin ? 'Superadmin' : 'User'}`, 'info');
+                await fetchCollections();
+                await fetchVideos();
+                if (isSuperAdmin) await fetchUsers();
             } catch (err) {
                 showMessage(`Verification failed: ${err.message}`, 'error');
             }
@@ -506,13 +787,20 @@
             showZone(resetRequestZone);
         });
 
+        goToRegisterBtn.addEventListener('click', () => {
+            registerUsernameInput.value = '';
+            registerEmailInput.value = '';
+            registerPasswordInput.value = '';
+            showZone(registerZone);
+        });
+
         resetRequestBackBtn.addEventListener('click', () => showZone(authZone));
 
         resetRequestForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = resetUsernameInput.value.trim();
             if (!username) {
-                showMessage('Enter username', 'error');
+                validationNotice('Enter username');
                 return;
             }
             try {
@@ -533,12 +821,41 @@
             showZone(authZone);
         });
 
+        registerBackBtn.addEventListener('click', () => {
+            showZone(authZone);
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = registerUsernameInput.value.trim();
+            const email = registerEmailInput.value.trim();
+            const password = registerPasswordInput.value;
+            if (!username || !email || !password) {
+                validationNotice('All fields are required');
+                return;
+            }
+            try {
+                await apiJson('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                showMessage('Account created. Please sign in.', 'success');
+                pageNoticeTemp('Account created. Please sign in.', 'success', 5000);
+                adminUsernameInput.value = username;
+                registerPasswordInput.value = '';
+                showZone(authZone);
+            } catch (err) {
+                showMessage(`Registration failed: ${err.message}`, 'error');
+            }
+        });
+
         resetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const token = resetTokenInput.value.trim();
             const newPassword = newPasswordInput.value;
             if (!token || !newPassword) {
-                showMessage('Enter token and new password', 'error');
+                validationNotice('Enter token and new password');
                 return;
             }
             try {
@@ -549,6 +866,7 @@
                 });
                 newPasswordInput.value = '';
                 showMessage('Password updated. Please sign in again.', 'success');
+                pageNoticeTemp('Password updated. Sign in again.', 'success', 5000);
                 window.history.replaceState({}, '', window.location.pathname);
                 showZone(authZone);
             } catch (err) {
@@ -556,37 +874,13 @@
             }
         });
 
-        credentialsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const libraryId = libraryIdInput.value.trim();
-            const apiKey = apiKeyInput.value.trim();
-            if (!libraryId || !apiKey) {
-                showMessage('Enter library ID and API key', 'error');
-                return;
-            }
-            try {
-                await apiJson('/api/session/stream-credentials', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ libraryId, apiKey })
-                });
-                currentLibraryId = libraryId;
-                libraryIdInput.value = '';
-                apiKeyInput.value = '';
-
-                credentialsZone.classList.add('hidden');
-                showAppShell('dashboard');
-                await fetchCollections();
-                await fetchVideos();
-            } catch (err) {
-                showMessage(`Failed to connect: ${err.message}`, 'error');
-            }
-        });
-
         // Logout Handler
         logoutBtn.addEventListener('click', () => {
             currentLibraryId = null;
             currentCollectionId = 'all';
+            currentUser = null;
+            isSuperAdmin = false;
+            updateNavVisibility();
             cachedVideos = [];
             cachedCollections = [];
             
@@ -619,7 +913,7 @@
             const nextCollectionId = editVideoCollection.value;
 
             if (!nextTitle) {
-                showMessage('Title cannot be empty', 'error');
+                validationNotice('Title cannot be empty');
                 return;
             }
 
@@ -631,6 +925,7 @@
                     collectionId: nextCollectionId ? nextCollectionId : null
                 });
                 showMessage('Video updated successfully', 'success');
+                pageNoticeTemp('Video updated successfully', 'success', 4000);
                 closeVideoModal();
                 await fetchCollections();
                 await fetchVideos();
@@ -656,6 +951,10 @@
         // Upload Handler
         uploadBtn.addEventListener('click', async () => {
             if (isUploading) return;
+            if (!currentLibraryId) {
+                setCredAlertVisible(true);
+                return;
+            }
 
             const files = Array.from(videoFileInput.files || []);
 
@@ -668,6 +967,13 @@
         });
 
         async function fetchCollections() {
+            if (!currentLibraryId) {
+                setCredAlertVisible(true);
+                cachedCollections = [];
+                renderCollections();
+                pageNoticeTemp('Stream credentials missing. Assign Library ID and API Key.', 'warn', 6000);
+                return;
+            }
             try {
                 const response = await fetch(
                     `/api/collections`,
@@ -686,10 +992,13 @@
                 const data = await response.json();
                 cachedCollections = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 renderCollections();
+                pageNoticeTemp(`Collections refreshed (${cachedCollections.length})`, 'success', 3000);
             } catch (error) {
                 console.error('Error fetching collections:', error);
                 cachedCollections = [];
                 renderCollections();
+                pageNoticeTemp('Failed to load collections', 'warn', 4000);
+                showMessage('Failed to load collections', 'error');
             }
         }
 
@@ -738,6 +1047,12 @@
 
         // Fetch Videos Function
         async function fetchVideos() {
+            if (!currentLibraryId) {
+                setCredAlertVisible(true);
+                galleryGrid.innerHTML = '<div class="error rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">Stream credentials not set for this user. A superadmin must assign a Library ID and API Key.</div>';
+                pageNoticeTemp('Stream credentials missing. Assign Library ID and API Key.', 'warn', 6000);
+                return;
+            }
             try {
                 galleryGrid.innerHTML = '<div class="loading">Loading videos...</div>';
                 
@@ -754,33 +1069,30 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
-                cachedVideos = data.items || [];
-                renderFilteredVideos();
-                
+                cachedVideos = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+
+                if (currentCollectionId === 'all') {
+                    renderVideos(cachedVideos);
+                    pageNoticeTemp(`Videos loaded (${cachedVideos.length})`, 'success', 3000);
+                    return;
+                }
+
+                const filtered = cachedVideos.filter(v => {
+                    const vCollectionId = v.collectionId || v.collectionID || v.collectionGuid || v.collectionGUID || v.collection;
+                    return vCollectionId != null && String(vCollectionId) === String(currentCollectionId);
+                });
+
+                renderVideos(filtered);
+                pageNoticeTemp(`Videos filtered (${filtered.length})`, 'success', 3000);
             } catch (error) {
                 console.error('Error fetching videos:', error);
-                galleryGrid.innerHTML = '<div class="error">Failed to load videos. Please check your credentials.</div>';
-            }
-        }
-
-        function renderFilteredVideos() {
-            if (!Array.isArray(cachedVideos)) {
+                galleryGrid.innerHTML = '<div class="error">Failed to load videos.</div>';
                 cachedVideos = [];
+                pageNoticeTemp('Failed to load videos', 'warn', 4000);
+                showMessage('Failed to load videos', 'error');
             }
-
-            if (currentCollectionId === 'all') {
-                renderVideos(cachedVideos);
-                return;
-            }
-
-            const filtered = cachedVideos.filter(v => {
-                const vCollectionId = v.collectionId || v.collectionID || v.collectionGuid || v.collectionGUID || v.collection;
-                return vCollectionId != null && String(vCollectionId) === String(currentCollectionId);
-            });
-
-            renderVideos(filtered);
         }
 
         // Render Videos in Gallery
@@ -1165,8 +1477,10 @@
 
                 if (failed === 0) {
                     showMessage(`Upload complete: ${succeeded}/${files.length} succeeded`, 'success');
+                    pageNoticeTemp(`Upload complete: ${succeeded}/${files.length} succeeded`, 'success', 5000);
                 } else {
                     showMessage(`Upload complete: ${succeeded} succeeded, ${failed} failed`, 'error');
+                    pageNoticeTemp(`Upload finished: ${succeeded} succeeded, ${failed} failed`, 'warn', 6000);
                 }
                 videoFileInput.value = '';
                 await fetchVideos();
@@ -1323,45 +1637,99 @@
                 }
                 
                 showMessage('Video deleted successfully', 'success');
+                pageNoticeTemp('Video deleted', 'success', 4000);
                 await fetchVideos();
                 
             } catch (error) {
                 console.error('Delete error:', error);
                 showMessage(`Delete failed: ${error.message}`, 'error');
+                pageNoticeTemp('Video delete failed', 'warn', 4000);
             }
         }
 
-        // Show message function
-        function showMessage(message, type) {
+        // Show message function (unified, enterprise-style toast)
+        function showMessage(message, type = 'info') {
             const host = toastHost || document.body;
-            const div = document.createElement('div');
 
-            const isError = String(type) === 'error';
-            const isSuccess = String(type) === 'success';
-            const base = 'mb-3 rounded-xl border px-4 py-3 text-sm shadow-sm';
-            const cls = isError
-                ? `${base} border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200`
-                : isSuccess
-                    ? `${base} border-green-200 bg-green-50 text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-200`
-                    : `${base} border-gray-200 bg-white text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200`;
+            const variant = {
+                success: {
+                    border: 'border-emerald-200/80 dark:border-emerald-800/60',
+                    bg: 'bg-white/90 dark:bg-black/70',
+                    dot: 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.2)]',
+                    title: 'Success'
+                },
+                error: {
+                    border: 'border-red-200/80 dark:border-red-800/60',
+                    bg: 'bg-white/90 dark:bg-black/70',
+                    dot: 'bg-red-500 shadow-[0_0_0_4px_rgba(248,113,113,0.2)]',
+                    title: 'Something went wrong'
+                },
+                info: {
+                    border: 'border-blue-200/80 dark:border-blue-800/60',
+                    bg: 'bg-white/90 dark:bg-black/70',
+                    dot: 'bg-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,0.2)]',
+                    title: 'Notice'
+                }
+            }[String(type)] || {
+                border: 'border-blue-200/80 dark:border-blue-800/60',
+                bg: 'bg-white/90 dark:bg-black/70',
+                dot: 'bg-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,0.2)]',
+                title: 'Notice'
+            };
 
-            div.className = cls;
-            div.textContent = String(message || '');
-            host.prepend(div);
+            const card = document.createElement('div');
+            card.className = `pointer-events-auto w-full overflow-hidden rounded-2xl border ${variant.border} ${variant.bg} shadow-lg backdrop-blur transition-all duration-300 opacity-0 translate-y-2`;
+            card.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
-            setTimeout(() => div.remove(), 5000);
+            const row = document.createElement('div');
+            row.className = 'flex items-start gap-3 px-4 py-3';
+
+            const dot = document.createElement('div');
+            dot.className = `mt-1 h-2.5 w-2.5 rounded-full ${variant.dot}`;
+
+            const content = document.createElement('div');
+            content.className = 'flex-1 space-y-1';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'text-sm font-semibold text-gray-900 dark:text-white/90';
+            titleEl.textContent = variant.title;
+
+            const messageEl = document.createElement('div');
+            messageEl.className = 'text-sm text-gray-700 dark:text-gray-200';
+            messageEl.textContent = String(message || '');
+
+            content.appendChild(titleEl);
+            content.appendChild(messageEl);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.setAttribute('type', 'button');
+            closeBtn.className = 'ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-black/5 hover:text-gray-800 dark:hover:bg-white/5 dark:text-gray-300';
+            closeBtn.innerHTML = '<span aria-hidden="true">&times;</span>';
+            closeBtn.addEventListener('click', () => {
+                card.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => card.remove(), 200);
+            });
+
+            row.appendChild(dot);
+            row.appendChild(content);
+            row.appendChild(closeBtn);
+            card.appendChild(row);
+
+            host.prepend(card);
+            requestAnimationFrame(() => {
+                card.classList.remove('opacity-0', 'translate-y-2');
+            });
+
+            setTimeout(() => {
+                card.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => card.remove(), 200);
+            }, 6000);
         }
 
-        if (navDashboardBtn) {
-            navDashboardBtn.addEventListener('click', () => showView('dashboard'));
-        }
-        if (navSettingsBtn) {
-            navSettingsBtn.addEventListener('click', () => showView('settings'));
-        }
 
         if (changePasswordForm) {
             changePasswordForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            e.preventDefault();
                 const currentPassword = currentPasswordInput?.value || '';
                 const newPassword = nextPasswordInput?.value || '';
                 if (!currentPassword || !newPassword) {
@@ -1382,6 +1750,7 @@
                     if (currentPasswordInput) currentPasswordInput.value = '';
                     if (nextPasswordInput) nextPasswordInput.value = '';
                     showMessage('Password updated successfully', 'success');
+                    pageNoticeTemp('Password updated', 'success', 4000);
                 } catch (err) {
                     showMessage(`Password update failed: ${err.message}`, 'error');
                 } finally {

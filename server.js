@@ -21,11 +21,10 @@ const PORT = Number(process.env.PORT || 5173);
 const HOST = process.env.HOST || '0.0.0.0';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change_me';
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_2FA_EMAIL = process.env.ADMIN_2FA_EMAIL || '';
 const APP_BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
 
-const ADMIN_STORE_PATH = path.join(__dirname, 'data', 'admin.json');
+const USER_STORE_PATH = path.join(__dirname, 'data', 'users.json');
+const VALID_ROLES = ['superadmin', 'user'];
 
 const TAILADMIN_BUILD_DIR = path.join(
   __dirname,
@@ -67,46 +66,100 @@ function requireAuth(req, res, next) {
 }
 
 function requireStreamCreds(req, res, next) {
-  if (!req.session?.stream?.libraryId || !req.session?.stream?.apiKey) {
+  if (!req.session?.user?.libraryId || !req.session?.user?.apiKey) {
     return res.status(400).json({ error: 'Stream credentials missing' });
   }
   return next();
 }
 
-async function ensureAdminStore() {
-  await fs.mkdir(path.dirname(ADMIN_STORE_PATH), { recursive: true });
+async function ensureUserStore() {
+  await fs.mkdir(path.dirname(USER_STORE_PATH), { recursive: true });
 
-  const envHash = process.env.ADMIN_PASSWORD_HASH;
-  const envPassword = process.env.ADMIN_PASSWORD;
-
-  // Always prefer environment configuration if provided. This ensures changes to
-  // ADMIN_PASSWORD take effect even if admin.json already exists.
-  if (envHash || envPassword) {
-    const passwordHash = envHash ? String(envHash) : await bcrypt.hash(String(envPassword), 12);
-    const store = { passwordHash };
-    await fs.writeFile(ADMIN_STORE_PATH, JSON.stringify(store, null, 2), 'utf8');
-    return;
-  }
-
-  // Fall back to existing store if no env credentials are provided.
+  // If file exists and has users, keep it.
   try {
-    const raw = await fs.readFile(ADMIN_STORE_PATH, 'utf8');
+    const raw = await fs.readFile(USER_STORE_PATH, 'utf8');
     const parsed = JSON.parse(raw);
-    if (parsed?.passwordHash) return;
+    if (Array.isArray(parsed?.users) && parsed.users.length > 0) return;
   } catch {
     // ignore
   }
 
-  throw new Error('Missing ADMIN_PASSWORD or ADMIN_PASSWORD_HASH in environment');
+  // Seed from env if provided
+  const seedUser = process.env.ADMIN_USERNAME || 'admin';
+  const envHash = process.env.ADMIN_PASSWORD_HASH;
+  const envPassword = process.env.ADMIN_PASSWORD;
+  const seedEmail = process.env.ADMIN_2FA_EMAIL || '';
+
+  // If no password provided, start with empty store; first registration can bootstrap superadmin.
+  if (!envHash && !envPassword) {
+    await fs.writeFile(USER_STORE_PATH, JSON.stringify({ users: [] }, null, 2), 'utf8');
+    return;
+  }
+
+  const passwordHash = envHash ? String(envHash) : await bcrypt.hash(String(envPassword), 12);
+  const users = [
+    {
+      username: String(seedUser),
+      passwordHash,
+      email: String(seedEmail),
+      role: 'superadmin',
+      libraryId: process.env.SEED_LIBRARY_ID || null,
+      apiKey: process.env.SEED_API_KEY || null
+    }
+  ];
+  await fs.writeFile(USER_STORE_PATH, JSON.stringify({ users }, null, 2), 'utf8');
 }
 
-async function readAdminStore() {
-  const raw = await fs.readFile(ADMIN_STORE_PATH, 'utf8');
-  return JSON.parse(raw);
+async function readUserStore() {
+  const raw = await fs.readFile(USER_STORE_PATH, 'utf8');
+  const parsed = JSON.parse(raw);
+  const users = Array.isArray(parsed?.users) ? parsed.users : [];
+  // Ensure default roles on legacy records
+  return users.map((u) => ({
+    ...u,
+    role: VALID_ROLES.includes(u.role) ? u.role : 'user'
+  }));
 }
 
-async function writeAdminStore(next) {
-  await fs.writeFile(ADMIN_STORE_PATH, JSON.stringify(next, null, 2), 'utf8');
+async function writeUserStore(users) {
+  await fs.writeFile(USER_STORE_PATH, JSON.stringify({ users }, null, 2), 'utf8');
+}
+
+async function upsertUser(user) {
+  const users = await readUserStore();
+  const idx = users.findIndex((u) => String(u.username).toLowerCase() === String(user.username).toLowerCase());
+  if (idx >= 0) {
+    users[idx] = user;
+  } else {
+    users.push(user);
+  }
+  await writeUserStore(users);
+}
+
+function sanitizeUser(user) {
+  if (!user) return null;
+  const { passwordHash, ...rest } = user;
+  return {
+    ...rest,
+    hasPassword: Boolean(passwordHash),
+    hasStreamCredentials: Boolean(user.libraryId && user.apiKey)
+  };
+}
+
+function findUser(users, username) {
+  return users.find((u) => String(u.username).toLowerCase() === String(username).toLowerCase());
+}
+
+function requireSuperAdmin(req, res, next) {
+  if (req.session?.user?.role === 'superadmin') return next();
+  return res.status(403).json({ error: 'Forbidden' });
+}
+
+async function ensureSuperAdminExistsAfterChange(users) {
+  const superAdmins = users.filter((u) => u.role === 'superadmin');
+  if (superAdmins.length === 0) {
+    throw new Error('At least one superadmin is required');
+  }
 }
 
 function createMailer() {
@@ -131,7 +184,7 @@ function createMailer() {
 const mailer = createMailer();
 const SMTP_FROM = process.env.SMTP_FROM || 'no-reply@example.com';
 
-const resetTokens = new Map();
+const resetTokens = new Map(); // token -> { username, expiresAt }
 
 function randomOtp() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
@@ -186,7 +239,8 @@ app.get('/api/auth/me', (req, res) => {
   res.json({
     authenticated: Boolean(req.session?.authenticated),
     needsOtp: Boolean(req.session?.otp?.pending),
-    streamConfigured: Boolean(req.session?.stream?.libraryId)
+    streamConfigured: Boolean(req.session?.user?.libraryId),
+    user: req.session?.user ? sanitizeUser(req.session.user) : null
   });
 });
 
@@ -194,25 +248,32 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
-    if (String(username) !== String(ADMIN_USERNAME)) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const store = await readAdminStore();
-    const ok = await bcrypt.compare(String(password), String(store.passwordHash));
+    const users = await readUserStore();
+    const user = users.find((u) => String(u.username).toLowerCase() === String(username).toLowerCase());
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const ok = await bcrypt.compare(String(password), String(user.passwordHash));
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
-    if (!ADMIN_2FA_EMAIL) return res.status(500).json({ error: '2FA email not configured' });
+    if (!user.email) return res.status(500).json({ error: 'User email not configured for 2FA' });
 
     const otp = randomOtp();
     req.session.otp = {
       pending: true,
       code: otp,
       expiresAt: Date.now() + 10 * 60 * 1000,
-      attempts: 0
+      attempts: 0,
+      username: user.username,
+      email: user.email,
+      role: user.role || 'user',
+      libraryId: user.libraryId || null,
+      apiKey: user.apiKey || null
     };
     req.session.authenticated = false;
 
     await sendEmail(
-      ADMIN_2FA_EMAIL,
+      user.email,
       'Your login verification code',
       `Your verification code is: ${otp}\n\nIt expires in 10 minutes.`
     );
@@ -238,6 +299,13 @@ app.post('/api/auth/verify-otp', (req, res) => {
   if (String(otp) !== String(record.code)) return res.status(401).json({ error: 'Invalid OTP' });
 
   req.session.authenticated = true;
+  req.session.user = {
+    username: record.username,
+    email: record.email,
+    role: record.role || 'user',
+    libraryId: record.libraryId || null,
+    apiKey: record.apiKey || null
+  };
   req.session.otp = { pending: false };
   res.json({ authenticated: true });
 });
@@ -251,12 +319,18 @@ app.post('/api/auth/change-password', requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body || {};
     if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Missing currentPassword or newPassword' });
 
-    const store = await readAdminStore();
-    const ok = await bcrypt.compare(String(currentPassword), String(store.passwordHash));
+    const users = await readUserStore();
+    const currentUser = users.find(
+      (u) => String(u.username).toLowerCase() === String(req.session?.user?.username || '').toLowerCase()
+    );
+    if (!currentUser) return res.status(401).json({ error: 'User not found' });
+
+    const ok = await bcrypt.compare(String(currentPassword), String(currentUser.passwordHash));
     if (!ok) return res.status(401).json({ error: 'Invalid current password' });
 
     const passwordHash = await bcrypt.hash(String(newPassword), 12);
-    await writeAdminStore({ passwordHash });
+    currentUser.passwordHash = passwordHash;
+    await upsertUser(currentUser);
 
     res.json({ ok: true });
   } catch (err) {
@@ -270,19 +344,21 @@ app.post('/api/auth/request-reset', async (req, res) => {
   if (!username) return res.status(400).json({ error: 'Missing username' });
 
   // Always return ok to avoid account enumeration.
-  if (String(username) !== String(ADMIN_USERNAME) || !ADMIN_2FA_EMAIL) {
+  const users = await readUserStore();
+  const user = users.find((u) => String(u.username).toLowerCase() === String(username).toLowerCase());
+  if (!user || !user.email) {
     return res.json({ ok: true });
   }
 
   const token = nanoid(48);
-  resetTokens.set(token, { expiresAt: Date.now() + 30 * 60 * 1000 });
+  resetTokens.set(token, { expiresAt: Date.now() + 30 * 60 * 1000, username: user.username });
 
   const link = `${APP_BASE_URL}/?resetToken=${encodeURIComponent(token)}`;
   try {
     await sendEmail(
-      ADMIN_2FA_EMAIL,
+      user.email,
       'Password reset',
-      `A password reset was requested.\n\nOpen this link to reset your password (expires in 30 minutes):\n${link}`
+      `A password reset was requested for your account.\n\nOpen this link to reset your password (expires in 30 minutes):\n${link}`
     );
   } catch (err) {
     console.error('Reset email error:', err);
@@ -294,7 +370,7 @@ app.post('/api/auth/request-reset', async (req, res) => {
 
 app.get('/api/session/stream-info', requireAuth, requireStreamCreds, (req, res) => {
   res.json({
-    libraryId: req.session.stream.libraryId
+    libraryId: req.session.user.libraryId
   });
 });
 
@@ -325,7 +401,7 @@ app.post('/api/uploads/presign', requireAuth, requireStreamCreds, async (req, re
     const videoGuid = created.guid;
 
     // Step 2: generate presigned signature
-    const { libraryId, apiKey } = req.session.stream;
+    const { libraryId, apiKey } = req.session.user || {};
     const expire = Math.floor(Date.now() / 1000) + 15 * 60;
     const signature = sha256Hex(`${libraryId}${apiKey}${expire}${videoGuid}`);
 
@@ -361,31 +437,30 @@ app.post('/api/auth/reset', async (req, res) => {
     return res.status(400).json({ error: 'Token expired' });
   }
 
+  const users = await readUserStore();
+  const user = users.find((u) => String(u.username).toLowerCase() === String(rec.username).toLowerCase());
+  if (!user) return res.status(400).json({ error: 'Invalid token' });
+
   const passwordHash = await bcrypt.hash(String(newPassword), 12);
-  await writeAdminStore({ passwordHash });
+  user.passwordHash = passwordHash;
+  await upsertUser(user);
   resetTokens.delete(String(token));
 
   // Force re-login
   req.session.authenticated = false;
   req.session.otp = { pending: false };
+  req.session.user = null;
 
   res.json({ ok: true });
 });
 
 app.post('/api/session/stream-credentials', requireAuth, (req, res) => {
-  const { libraryId, apiKey } = req.body || {};
-  if (!libraryId || !apiKey) return res.status(400).json({ error: 'Missing libraryId/apiKey' });
-
-  req.session.stream = {
-    libraryId: String(libraryId).trim(),
-    apiKey: String(apiKey).trim()
-  };
-
-  res.json({ ok: true });
+  // Deprecated: keep for backward compatibility, restrict to superadmin and target user via username
+  res.status(410).json({ error: 'Endpoint deprecated. Stream credentials are managed by superadmin per user.' });
 });
 
 async function streamFetch(req, pathPart, init = {}) {
-  const { libraryId, apiKey } = req.session.stream;
+  const { libraryId, apiKey } = req.session.user || {};
   const url = `https://video.bunnycdn.com/library/${encodeURIComponent(libraryId)}${pathPart}`;
 
   const headers = {
@@ -457,7 +532,7 @@ app.post('/api/videos/upload', requireAuth, requireStreamCreds, upload.single('f
     const guid = created.guid;
 
     // Step 2: stream file to upstream
-    const { libraryId, apiKey } = req.session.stream;
+    const { libraryId, apiKey } = req.session.user || {};
     const putUrl = `https://video.bunnycdn.com/library/${encodeURIComponent(libraryId)}/videos/${encodeURIComponent(guid)}`;
 
     const readStream = fssync.createReadStream(tempPath);
@@ -487,7 +562,7 @@ app.post('/api/videos/upload', requireAuth, requireStreamCreds, upload.single('f
 
 app.get('/api/thumb/:videoGuid/:fileName', requireAuth, requireStreamCreds, async (req, res) => {
   const { videoGuid, fileName } = req.params;
-  const { libraryId } = req.session.stream;
+  const { libraryId } = req.session.user || {};
 
   const upstream = `https://${encodeURIComponent(libraryId)}.b-cdn.net/${encodeURIComponent(videoGuid)}/${encodeURIComponent(fileName)}`;
   const r = await fetch(upstream, { method: 'GET' });
@@ -504,7 +579,127 @@ app.get('/api/thumb/:videoGuid/:fileName', requireAuth, requireStreamCreds, asyn
   res.send(buf);
 });
 
-await ensureAdminStore();
+// --- Superadmin user management ---
+app.get('/api/admin/users', requireAuth, requireSuperAdmin, async (_req, res) => {
+  const users = await readUserStore();
+  res.json({ users: users.map(sanitizeUser) });
+});
+
+app.post('/api/admin/users', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { username, password, email, role = 'user', libraryId = null, apiKey = null } = req.body || {};
+    if (!username || !password || !email) return res.status(400).json({ error: 'Missing username, password, or email' });
+    if (!VALID_ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+    const users = await readUserStore();
+    if (findUser(users, username)) return res.status(409).json({ error: 'Username already exists' });
+
+    const passwordHash = await bcrypt.hash(String(password), 12);
+    await upsertUser({
+      username: String(username),
+      passwordHash,
+      email: String(email),
+      role,
+      libraryId: libraryId ? String(libraryId).trim() : null,
+      apiKey: apiKey ? String(apiKey).trim() : null
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Create user error:', err);
+    res.status(500).json({ error: err?.message || 'Create user failed' });
+  }
+});
+
+app.patch('/api/admin/users/:username', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const targetUsername = req.params.username;
+    const { email, password, role, libraryId, apiKey } = req.body || {};
+
+    const users = await readUserStore();
+    const user = findUser(users, targetUsername);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (role && !VALID_ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+    if (email !== undefined) user.email = String(email);
+    if (libraryId !== undefined) user.libraryId = libraryId ? String(libraryId).trim() : null;
+    if (apiKey !== undefined) user.apiKey = apiKey ? String(apiKey).trim() : null;
+    if (role !== undefined) user.role = role;
+    if (password) {
+      user.passwordHash = await bcrypt.hash(String(password), 12);
+    }
+
+    await upsertUser(user);
+    const all = await readUserStore();
+    await ensureSuperAdminExistsAfterChange(all);
+
+    // If updated user matches current session, refresh session data
+    if (req.session?.user && String(req.session.user.username).toLowerCase() === String(user.username).toLowerCase()) {
+      req.session.user = {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        libraryId: user.libraryId || null,
+        apiKey: user.apiKey || null
+      };
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Update user error:', err);
+    res.status(500).json({ error: err?.message || 'Update user failed' });
+  }
+});
+
+app.delete('/api/admin/users/:username', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const targetUsername = req.params.username;
+    const users = await readUserStore();
+    const idx = users.findIndex((u) => String(u.username).toLowerCase() === String(targetUsername).toLowerCase());
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+    const removing = users[idx];
+    const next = [...users];
+    next.splice(idx, 1);
+    await ensureSuperAdminExistsAfterChange(next);
+    await writeUserStore(next);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    res.status(500).json({ error: err?.message || 'Delete user failed' });
+  }
+});
+
+// Registration endpoint
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password, email } = req.body || {};
+    if (!username || !password || !email) return res.status(400).json({ error: 'Missing username, password, or email' });
+
+    const users = await readUserStore();
+    const exists = findUser(users, username);
+    if (exists) return res.status(409).json({ error: 'Username already exists' });
+
+    const passwordHash = await bcrypt.hash(String(password), 12);
+    await upsertUser({
+      username: String(username),
+      passwordHash,
+      email: String(email),
+      role: users.length === 0 ? 'superadmin' : 'user',
+      libraryId: null,
+      apiKey: null
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: err?.message || 'Registration failed' });
+  }
+});
+
+await ensureUserStore();
 
 app.listen(PORT, HOST, () => {
   console.log(`Server running at http://localhost:${PORT}`);
